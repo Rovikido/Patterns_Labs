@@ -32,12 +32,13 @@ class Developer:
 
 class Assignment:
     """Tasks with due date"""
-    def __init__(self, project, description: str = "Description"):
+    def __init__(self, project, dev, description: str = "Description"):
         self.parent_project: Project = project
         self.received_tasks = {}
         self.is_done = False
         self.description = description
         self.status = "0%"
+        self.developer: Developer = dev
 
     def __str__(self):
         return f"Assignment from project '{self.parent_project.title}' is {'' if self.is_done else 'not'} done." \
@@ -61,8 +62,6 @@ class Assignment:
     def get_tasks_to_datetime(self, date: datetime):
         # TODO: test and finish
         return str(list([(task_date, task) for task_date, task in self.received_tasks.items() if date > task_date]))
-
-
 
 
 class Project:
@@ -100,8 +99,6 @@ class Project:
             dev.projects.remove(self)
         except ValueError:
             raise ValueError("Developer was not found in the project!")
-
-
 
 
 class QAEngineer(Developer):
