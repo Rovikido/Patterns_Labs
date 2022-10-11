@@ -9,7 +9,7 @@ class Developer:
                  email="email@com", position=-1, rank="rank", salary=-1, projects=[]):
         try:
             self.id: int = self.id_counter
-            self.id_counter += 1
+            Developer.id_counter += 1
             self.name: str = name
             self.address: str = address
             if re.match("^\\+?[1-9][0-9]{7,14}$", phone_number) is None:
@@ -129,20 +129,20 @@ class ProjectManager(Developer):
             raise ValueError(f"Discussion with {dev.name} failed! " + str(e))
 
 
-if __name__ == '__main__':
-    try:
-        dev1 = Developer(name="Dev1")
-        project1 = Project(limit=2, task_list=["task1", "task2"])
-        project1.add_developer(dev1)
-        assignment1 = Assignment(project1, "test assignment1")
-        assignment1.add_task("Task1", due_date=datetime.datetime(2020, 5, 17))
-        assignment1.add_task("Task2", due_date=datetime.datetime(2022, 5, 17))
-        print(assignment1.get_tasks_to_datetime(datetime.datetime(2021, 5, 17)))
-        qa = QAEngineer()
-        print('\n' + qa.test_feature(assignment1))
-        pm = ProjectManager(project1)
-        pm.discuss_progress(dev1)
-        dev2 = Developer(name="Dev2")
-        pm.discuss_progress(dev2)
-    except Exception as e:
-        print(e)
+# if __name__ == '__main__':
+#     try:
+#         dev1 = Developer(name="Dev1")
+#         project1 = Project(limit=2, task_list=["task1", "task2"])
+#         project1.add_developer(dev1)
+#         assignment1 = Assignment(project1, "test assignment1")
+#         assignment1.add_task("Task1", due_date=datetime.datetime(2020, 5, 17))
+#         assignment1.add_task("Task2", due_date=datetime.datetime(2022, 5, 17))
+#         print(assignment1.get_tasks_to_datetime(datetime.datetime(2021, 5, 17)))
+#         qa = QAEngineer()
+#         print('\n' + qa.test_feature(assignment1))
+#         pm = ProjectManager(project1)
+#         pm.discuss_progress(dev1)
+#         dev2 = Developer(name="Dev2")
+#         pm.discuss_progress(dev2)
+#     except Exception as e:
+#         print(e)
