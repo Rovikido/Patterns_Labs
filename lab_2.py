@@ -2,12 +2,10 @@ from dataclasses import dataclass, field
 import re
 from datetime import datetime
 
+
 @dataclass
 class PersonalInfo:
     """Collection of all personal data about employee"""
-    # TODO: add default values
-    # TODO: add class wide id counter
-    id_counter = 0
     __name: str = "name surname"
     first_name: str = field(default="first_name", init=False)
     second_name: str = field(default="surname", init=False)
@@ -17,6 +15,7 @@ class PersonalInfo:
     _position: int = -1
     _rank: str = "rank"
     _salary: float = -1
+    id_counter = 0
 
     def __post_init__(self):
         self.id = PersonalInfo.id_counter
@@ -27,10 +26,12 @@ class PersonalInfo:
 
     @property
     def name(self) -> str:
+        """Retunrs name"""
         return str(self.first_name + self.second_name)
 
     @name.setter
     def name(self, value: str) -> (str, str):
+        """Sets name"""
         self.first_name, self.second_name = value.split(maxsplit=2)
 
 
@@ -41,11 +42,6 @@ class Employee:
 
     def calculate_salary(self):
         return self.personal_info._salary
-
-    #Todo: fix
-
-    # def ask_sick_leave(self, pm: ProjectManager):
-    #     return True
 
 
 class Developer(Employee):
@@ -62,20 +58,12 @@ class Developer(Employee):
         return self.projects
 
 
-class QAEngineer(Employee):
-    """Developer with access to testing"""
-    def __init__(self, personal_info: PersonalInfo = None):
-        Employee.__init__(self, personal_info)
-
-    def test_feature(self, *feature):
-        return str(*feature)
-
-
 class Project:
     """General Project with task list"""
     #Todo: finish
     def __init__(self, title="Title", start_date=None, task_list=[], developers=[], limit=-1):
         try:
+            self.task_list: [int] = []
             self.title: str = title
             self.start_date: datetime = start_date
             self.task_list: [str] = task_list
@@ -84,27 +72,56 @@ class Project:
         except Exception as e:
             raise ValueError("Project instantiation error! " + str(e))
 
+    def add_employee(self, dev: Employee):
+        """Adds employee to project(currently adds only devs)"""
+        mgn = AssignManagement(self, dev)
+        mgn.assign()
+
+    def remove_employee(self, dev: Employee):
+        """Removes employee to project(currently removes only devs)"""
+        mgn = AssignManagement(self, dev)
+        mgn.unassign()
+
 
 class ProjectManager(Employee):
     """Developer with access to testing"""
     def __init__(self, personal_info: PersonalInfo = None, project: Project = None):
         Employee.__init__(self, personal_info)
         self.project = project
+        self.employee_requests: [str] = []
 
-    def discuss_progress(self, dev: Developer):
+    def discuss_progress(self, engineer: Employee):
+        """Discusses project with engineer"""
         try:
-            if dev not in self.project.developers:
+            if engineer not in self.project.developers:
                 raise ValueError("Project manager has no access to developer!")
-            print(f"Discussion with {dev.personal_info.name} happened")
+            print(f"Discussion with {engineer.personal_info.name} happened")
         except ValueError as e:
-            raise ValueError(f"Discussion with {dev.name} failed! " + str(e))
+            raise ValueError(f"Discussion with {engineer.name} failed! " + str(e))
+
+
+class QAEngineer(Employee):
+    """Developer with access to testing"""
+    def __init__(self, personal_info: PersonalInfo = None):
+        Employee.__init__(self, personal_info)
+
+    def calculate_salary(self):
+        return None
+
+    def ask_sick_leave(self, pm: ProjectManager):
+        """Ads sick leave from employee to pm's requets list"""
+        pm.employee_requests.append(f"{self.personal_info.first_name} asks for sick leave")
+        return True
+
+    def add_ticket(self):
+        pass
 
 
 class Task:
     """Sub-tasks with due date"""
     id_counter = 0
 
-    def __init__(self, title: str = "task", items: [str] = None, is_done: bool = False, deadline: datetime = None):
+    def __init__(self, parent_project:Project, title: str = "task", items: [str] = None, is_done: bool = False, deadline: datetime = None):
         self.id = Task.id_counter
         Task.id_counter += 1
         self.title = title
@@ -113,8 +130,11 @@ class Task:
         self.is_done = is_done
         self.comments = "None"
         self.__finished_items = self.items if is_done else []
+        self.parent_project = parent_project
+        self.parent_project.task_list.append(self)
 
     def implement_item(self, item: str):
+        """Completes sub-task"""
         try:
             if item not in self.items:
                 raise ValueError("Item was not found in item list!")
@@ -125,10 +145,12 @@ class Task:
             #status_update
             if len(self.__finished_items) >= len(self.items):
                 self.is_done = True
+                self.parent_project.task_list.pop(self)
         except ValueError as e:
             raise ValueError("Item implementation error! " + str(e))
 
     def add_comment(self, text: str):
+        """Adds comment to comment string"""
         self.comments += "\n" + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + ": " + text
 
     def __str__(self):
@@ -162,6 +184,7 @@ class Assignment:
                 raise ValueError("Assignment task list cannot be longer than project task list!")
             self.received_tasks.append(task)
             self.__update_status()
+            return Task
         except Exception as e:
             raise ValueError("Task creation error! " + str(e))
 
@@ -170,31 +193,48 @@ class Assignment:
         return list([(task.deadline, task) for task in self.received_tasks if date > task.deadline])
 
 
-class AssignManager:
+class AssignManagement:
     """Handles all assignments"""
+    def __init__(self, project, dev):
+        try:
+            self.project: Project = project
+            self.dev: Developer = dev
+        except Exception as e:
+            raise ValueError("Assignment error! " + str(e))
 
-    def assign(self, project: Project, dev: Developer):
+
+    def assign(self):
         """Adds developer to specified project"""
         try:
-            if project.limit <= len(project.developers):
+            if self.project.limit <= len(self.project.developers):
                 raise ValueError("Project developer limit is exceeded!")
-            if dev in project.developers:
+            if self.dev in self.project.developers:
                 raise ValueError("Developer is already in the list!")
-            project.developers.append(dev)
-            dev.projects.append(project)
+            self.project.developers.append(self.dev)
+            self.dev.projects.append(self.project)
         except ValueError as e:
             raise ValueError("Failed to add developer! " + str(e))
 
-    def unassign(self, project: Project, dev: Developer):
+    def unassign(self):
         """Removes developer from project"""
         try:
-            project.developers.remove(dev)
-            dev.projects.remove(project)
+            self.project.developers.remove(self.dev)
+            self.dev.projects.remove(self.project)
         except ValueError:
             raise ValueError("Developer was not found in the project!")
 
-    def assign_possibility(self, project: Project, dev: Developer):
+    def assign_possibility(self):
         """Checks if developer can be added to the project"""
-        return not project.limit <= len(project.developers)
+        return not self.project.limit <= len(self.project.developers)
 
-#TODO: task7
+
+if __name__ == '__main__':
+    try:
+        dev1 = Developer(PersonalInfo("Dev1 Surname2"))
+        pr = Project(limit=2)
+        pr.add_employee(dev1)
+        assignment = Assignment(pr, dev1)
+        assignment.add_task(Task(pr, items=["subtask1", "subtask2"]))
+        assignment.received_tasks[0].implement_item("subtask1")
+    except Exception as e:
+        print(e)
