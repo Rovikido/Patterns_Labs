@@ -124,18 +124,15 @@ class Project(metaclass=ABCMeta):
     def add_employee(self, emp: Employee):
         """Adds employee to project"""
         pass
-        # mgn = AssignManagement(self, dev)
-        # mgn.assign()
 
     @abstractmethod
     def remove_employee(self, emp: Employee):
         """Removes employee to project"""
         pass
-        # mgn = AssignManagement(self, dev)
-        # mgn.unassign()
 
 
 class Web(Project):
+    """Web project subtype"""
     def __init__(self, title="Title", start_date=None, task_list=None, team=None, limit=-1, domain="/", host_provider="host name"):
         super().__init__(title, start_date, task_list, team, limit)
         self.domain = domain
@@ -151,6 +148,7 @@ class Web(Project):
 
 
 class Mobile(Project):
+    """Mobile project subtype"""
     def __init__(self, title="Title", start_date=None, task_list=None, team=None, limit=-1, is_crossplatform: bool = True):
         super().__init__(title, start_date, task_list, team, limit)
         self.is_crossplatform = is_crossplatform
@@ -165,6 +163,7 @@ class Mobile(Project):
 
 
 class Embedded(Project):
+    """Embedded project subtype"""
     def __init__(self, title="Title", start_date=None, task_list=None, team=None, limit=-1, open_source: bool = True):
         super().__init__(title, start_date, task_list, team, limit)
         self.open_source = open_source
@@ -179,8 +178,10 @@ class Embedded(Project):
 
 
 class SoftwareArchitect(Employee, metaclass=ABCMeta):
+    """Software Architect factory"""
 
     def fill_project(self, team: Team, project: Project):
+        """Replaces projects' team with a new one"""
         try:
             if project not in self.projects:
                 raise ValueError(f"Architect has no access to '{project.title}'!")
@@ -195,21 +196,27 @@ class SoftwareArchitect(Employee, metaclass=ABCMeta):
 
 
 class WebArchitect(SoftwareArchitect):
+    """Web Architect subtype"""
     def create_project(self, *args, **kwargs):
+        """Creates Web project"""
         project = Web(*args, **kwargs)
         self.projects.append(project)
         return project
 
 
 class MobileArchitect(SoftwareArchitect):
+    """Mobile Architect subtype"""
     def create_project(self, *args, **kwargs):
+        """Creates Mobile project"""
         project = Mobile(*args, **kwargs)
         self.projects.append(project)
         return project
 
 
 class EmbeddedArchitect(SoftwareArchitect):
+    """Embedded Architect subtype"""
     def create_project(self, *args, **kwargs):
+        """Creates Embedded project"""
         project = Embedded(*args, **kwargs)
         self.projects.append(project)
         return project
